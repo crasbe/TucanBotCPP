@@ -14,8 +14,9 @@
  * empty values
  * 
  */
-Message::Message() : m_target(""), m_source(""), 
-					 m_type(UNKNOWN), m_interpreted(false) {
+Message::Message() : m_target(""), m_source(""), m_message(""), 
+					 m_special(""), m_rawMessage(""), m_type(UNKNOWN), 
+					 m_interpreted(false) {
 	
 }
 
@@ -26,9 +27,9 @@ Message::Message() : m_target(""), m_source(""),
  * 
  */
 Message::Message(MessageType type, const string &source, 
-				 const string &target, const string &message) : 
+				 const string &target, const string &message, const string &special) : 
 				 m_target(target),  m_source(source), m_message(message),
-				 m_type(type), m_interpreted(false) {
+				 m_special(special), m_type(type), m_interpreted(false) {
 	construct();
 	
 }
@@ -38,11 +39,20 @@ Message::Message(MessageType type, const string &source,
  * 
  */
 Message::Message(const string &rawMessage) : m_target(""), m_source(""),
-											 m_message(""), 
+											 m_message(""), m_special(""),
 											 m_rawMessage(rawMessage), 
 											 m_type(UNKNOWN),
 											 m_interpreted(true) {
 	analyze();
+	
+	
+}
+
+/**
+ * @brief Destuctor
+ * 
+ */
+Message::~Message() {
 	
 	
 }
@@ -86,6 +96,39 @@ void Message::setMessageType(MessageType type) {
 		m_type = type;
 }
 
+/**
+ * 
+ * 
+ */
+string Message::getSource(void) const {
+	return m_source;
+}
+
+/**
+ * 
+ * 
+ * 
+ */
+string Message::getTarget(void) const {
+	return m_target;
+}
+
+/**
+ * 
+ * 
+ */
+string Message::getMessage(void) const {
+	return m_message;	
+}
+
+/**
+ * 
+ * 
+ * 
+ */
+string Message::getSpecial(void) const {
+	return m_special;
+}
 
 /**
  * 
@@ -104,21 +147,44 @@ void Message::construct(void) {
 void Message::analyze(void) {
 	
 	// Trim return and newline from the back of the raw string
-	if(m_rawMessage.back() == "\n") {
+	if(m_rawMessage.back() == '\n') {
 		m_rawMessage.pop_back();
-		if(m_rawMessage.back() == "\r") {
+		if(m_rawMessage.back() == '\r') {
 			m_rawMessage.pop_back();
 		}
 	}
 	
 	// Catch some special message types
 	// Ping: standard format "PING :message"
-	if(m_rawMessage.compare(0, 4, "PING") {
+	if(m_rawMessage.compare(0, 4, "PING") == 0) {
 		m_type = PING;
 		m_message = m_rawMessage.substr(6); // copy the message
 		return;
-	} else if(m_rawMessage.compare(0, 4, "USER") {
+	}
+	
+	if(m_rawMessage.compare(0, 4, "USER") == 0) {
+		std::cout << "Hallo" << std::endl;
 		m_type = USER;
-		m_source = m_rawMessage.substr(5, biszumSternchen);
+		
+		int first_space = m_rawMessage.find(" ", 5);
+		int colon = m_rawMessage.find(":");
+		
+		m_source = m_rawMessage.substr(5, first_space-5);
+		m_special = m_rawMessage.substr(first_space+1, colon-first_space-2); 
+		m_message = m_rawMessage.substr(colon+1);
+		
+		return;
+	}
+	
+	// Lines starting with a colon
+	//  PRIVMSG, NOTICE, JOIN, PART, KICK, 
+	if(m_rawMessage.compare(0, 1, ":") == 0) {
+		m_rawMessage.pop_back(); // remove this colon
+		
+		int first_space = m_rawMessage.find(" ");
+		int first_colon = m_rawMessage.find(":");
+		
+		
+		
 	}
 }
